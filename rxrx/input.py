@@ -77,12 +77,7 @@ def parse_example(value, use_bfloat16=True, pixel_stats=None, no_label=False):
     else:
         label = parsed["sirna"]
 
-    features = {
-        'image': image,
-        'desc': desc
-    }
-
-    return features, label
+    return image, label
 
 
 DEFAULT_PARAMS = dict(batch_size=512)
@@ -142,10 +137,14 @@ def input_fn(tf_records_glob,
             num_parallel_calls=input_fn_params['transpose_num_parallel_calls'])
 
     # Assign static batch size dimension
-    dataset = dataset.map(partial(set_shapes, transpose_input, batch_size))
+    # dataset = dataset.map(partial(set_shapes, transpose_input, batch_size))
 
     # Prefetch overlaps in-feed with training
     dataset = dataset.prefetch(
         buffer_size=input_fn_params['prefetch_buffer_size'])
 
     return dataset
+
+
+def predict_input_fn(images_glob):
+    pass

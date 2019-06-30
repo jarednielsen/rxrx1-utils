@@ -84,8 +84,6 @@ def resnet_model_fn(features, labels, mode, params, n_classes, num_train_images,
     Returns:
         A `TPUEstimatorSpec` for the model
     """
-    features, descriptions = features['image'], features['desc']
-
     if isinstance(features, dict):
         features = features['feature']
 
