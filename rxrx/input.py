@@ -121,11 +121,15 @@ def input_fn(tf_records_glob,
             num_parallel_calls=input_fn_params['map_and_batch_num_parallel_calls'],
             drop_remainder=True))
 
+    print("JAREDLOG: ", dataset.shape)
+
     # Transpose for performance on TPU
     if transpose_input:
         dataset = dataset.map(
             lambda images, labels: (tf.transpose(images, [1, 2, 3, 0]), labels),
             num_parallel_calls=input_fn_params['transpose_num_parallel_calls'])
+
+    print("JAREDLOG: ", dataset.shape)
 
     # Assign static batch size dimension
     dataset = dataset.map(partial(set_shapes, transpose_input, batch_size))

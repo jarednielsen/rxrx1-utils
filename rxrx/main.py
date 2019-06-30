@@ -344,7 +344,7 @@ def main(use_tpu,
         config=config,
         train_batch_size=train_batch_size,
         eval_batch_size=train_batch_size,
-        predict_batch_size=32,
+        predict_batch_size=train_batch_size,
         export_to_tpu=False)
 
 
