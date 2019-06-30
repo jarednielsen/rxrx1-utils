@@ -60,7 +60,6 @@ def parse_example(value, use_bfloat16=True, pixel_stats=None, no_label=False):
     parsed = tf.parse_single_example(value, keys_to_features)
     # experiment_plate_well, fx HEPG2-08_1_B03
     parsed['desc'] = tf.strings.format("{}_{}_{}", (parsed['experiment'], parsed['plate'], parsed['well']))
-    tf.logging.info(desc)
     image_raw = tf.decode_raw(parsed['image'], tf.uint8)
     image = tf.reshape(image_raw, image_shape)
     image.set_shape(image_shape)
