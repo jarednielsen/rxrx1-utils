@@ -46,7 +46,7 @@ DEFAULT_INPUT_FN_PARAMS = {
     'transpose_num_parallel_calls': 128,
     'prefetch_buffer_size': tf.contrib.data.AUTOTUNE,
 }
-DEFAULT_INPUT_FN_PARAMS = {
+DEFAULT_PREDICT_FN_PARAMS = {
     'tfrecord_dataset_buffer_size': 256,
     'tfrecord_dataset_num_parallel_reads': None,
     'parallel_interleave_cycle_length': 32,
