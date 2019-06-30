@@ -121,8 +121,6 @@ def input_fn(tf_records_glob,
             num_parallel_calls=input_fn_params['map_and_batch_num_parallel_calls'],
             drop_remainder=True))
 
-    tf.logging.info("JAREDLOG: {}".format(dataset.shape))
-
     # Transpose for performance on TPU
     if transpose_input:
         dataset = dataset.map(
