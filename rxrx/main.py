@@ -372,7 +372,7 @@ def main(use_tpu,
             input_fn_params=predict_fn_params,
             tf_records_glob=test_glob,
             pixel_stats=GLOBAL_PIXEL_STATS,
-            transpose_input=transpose_input,
+            transpose_input=False,
             use_bfloat16=use_bfloat16)
 
 
