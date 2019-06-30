@@ -132,6 +132,8 @@ def resnet_model_fn(features, labels, mode, params, n_classes, num_train_images,
         if 'batch_normalization' not in v.name
     ])
 
+    predictions_one_hot = tf.argmax(logits, axis=1)
+    predictions = tf.cast(predictions_one_hot > 0.5, tf.int64)
     accuracy = tf.metrics.accuracy(labels, logits)
 
     host_call = None
@@ -197,6 +199,7 @@ def resnet_model_fn(features, labels, mode, params, n_classes, num_train_images,
                                             max_queue=iterations_per_loop).as_default():
                 with summary.always_record_summaries():
                     summary.scalar('loss', loss[0], step=gs)
+                    summary.scalar('JAREDLOSS', loss[0], step=gs)
                     summary.scalar('learning_rate', lr[0], step=gs)
                     summary.scalar('current_epoch', ce[0], step=gs)
                     summary.scalar('accuracy', acc[0], step=gs)
@@ -364,6 +367,7 @@ def main(use_tpu,
     start_timestamp = time.time()  # This time will include compilation time
 
     resnet_classifier.train(input_fn=train_input_fn, max_steps=train_steps)
+    resnet_classifier.evaluate()
 
     tf.logging.info('Finished training up to step %d. Elapsed seconds %d.',
                     train_steps, int(time.time() - start_timestamp))
