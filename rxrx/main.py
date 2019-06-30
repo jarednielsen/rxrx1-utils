@@ -132,6 +132,8 @@ def resnet_model_fn(features, labels, mode, params, n_classes, num_train_images,
         if 'batch_normalization' not in v.name
     ])
 
+    accuracy = tf.metrics.accuracy(labels, logits)
+
     host_call = None
     if mode == tf.estimator.ModeKeys.TRAIN:
         # Compute the current epoch and associated learning rate from global_step.
@@ -169,7 +171,7 @@ def resnet_model_fn(features, labels, mode, params, n_classes, num_train_images,
             train_op = optimizer.minimize(loss, global_step)
 
 
-        def host_call_fn(gs, loss, lr, ce):
+        def host_call_fn(gs, loss, lr, ce, acc):
             """Training host call. Creates scalar summaries for training metrics.
             This function is executed on the CPU and should not directly reference
             any Tensors in the rest of the `model_fn`. To pass Tensors from the
@@ -197,6 +199,7 @@ def resnet_model_fn(features, labels, mode, params, n_classes, num_train_images,
                     summary.scalar('loss', loss[0], step=gs)
                     summary.scalar('learning_rate', lr[0], step=gs)
                     summary.scalar('current_epoch', ce[0], step=gs)
+                    summary.scalar('accuracy', acc[0], step=gs)
                     return summary.all_summary_ops()
 
             # To log the loss, current learning rate, and epoch for Tensorboard, the
@@ -208,8 +211,9 @@ def resnet_model_fn(features, labels, mode, params, n_classes, num_train_images,
         loss_t = tf.reshape(loss, [1])
         lr_t = tf.reshape(learning_rate, [1])
         ce_t = tf.reshape(current_epoch, [1])
+        acc_t = tf.reshape(accuracy, [1])
 
-        host_call = (host_call_fn, [gs_t, loss_t, lr_t, ce_t])
+        host_call = (host_call_fn, [gs_t, loss_t, lr_t, ce_t, acc_t])
 
     else:
         train_op = None
@@ -334,8 +338,10 @@ def main(use_tpu,
     use_bfloat16 = (tf_precision == 'bfloat16')
 
     train_glob = os.path.join(url_base_path, 'train', '*.tfrecord')
+    test_glob = os.path.join(url_base_path, 'test', '*.tfrecord')
 
     tf.logging.info("Train glob: {}".format(train_glob))
+    tf.logging.info("Test glob: {}".format(test_glob))
 
     train_input_fn = functools.partial(rxinput.input_fn,
             input_fn_params=input_fn_params,
@@ -343,7 +349,12 @@ def main(use_tpu,
             pixel_stats=GLOBAL_PIXEL_STATS,
             transpose_input=transpose_input,
             use_bfloat16=use_bfloat16)
-
+    test_input_fn = functools.partial(rxinput.input_fn,
+            input_fn_params=input_fn_params,
+            tf_records_glob=test_glob,
+            pixel_stats=GLOBAL_PIXEL_STATS,
+            transpose_input=transpose_input,
+            use_bfloat16=use_bfloat16)
 
 
     tf.logging.info('Training for %d steps (%.2f epochs in total). Current'
