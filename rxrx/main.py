@@ -132,9 +132,8 @@ def resnet_model_fn(features, labels, mode, params, n_classes, num_train_images,
         if 'batch_normalization' not in v.name
     ])
 
-    predictions_one_hot = tf.argmax(logits, axis=1)
-    predictions = tf.cast(predictions_one_hot > 0.5, tf.int64)
-    accuracy = tf.metrics.accuracy(labels, logits)
+    predictions = tf.argmax(logits, axis=1)
+    accuracy = tf.metrics.accuracy(labels, predictions)
 
     host_call = None
     if mode == tf.estimator.ModeKeys.TRAIN:
@@ -222,7 +221,7 @@ def resnet_model_fn(features, labels, mode, params, n_classes, num_train_images,
         train_op = None
 
     eval_metrics = None
-    if mode == tf.estimator.ModeKeys.EVAL:
+    if True: #mode == tf.estimator.ModeKeys.EVAL:
 
         def metric_fn(labels, logits):
             """Evaluation metric function. Evaluates accuracy.
@@ -367,7 +366,7 @@ def main(use_tpu,
     start_timestamp = time.time()  # This time will include compilation time
 
     resnet_classifier.train(input_fn=train_input_fn, max_steps=train_steps)
-    resnet_classifier.evaluate()
+    # resnet_classifier.evaluate(input_fn=test_input_fn, )
 
     tf.logging.info('Finished training up to step %d. Elapsed seconds %d.',
                     train_steps, int(time.time() - start_timestamp))
