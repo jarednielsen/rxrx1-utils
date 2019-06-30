@@ -68,9 +68,10 @@ def parse_example(value, use_bfloat16=True, pixel_stats=None, no_label=False):
     if use_bfloat16:
         image = tf.image.convert_image_dtype(image, dtype=tf.bfloat16)
 
-    # label = parsed.get("sirna", None)
+    # label = parsed["sirna"]
+    label = tf.constant(1, dtype=tf.int64)
 
-    return image #label
+    return image, label
 
 
 DEFAULT_PARAMS = dict(batch_size=512)
