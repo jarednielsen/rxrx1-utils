@@ -84,7 +84,7 @@ def resnet_model_fn(features, labels, mode, params, n_classes, num_train_images,
         assert not transpose_input  # channels_first only for GPU
         features = tf.transpose(features, [0, 3, 1, 2])
 
-    if transpose_input: # and mode != tf.estimator.ModeKeys.PREDICT:
+    if transpose_input and mode != tf.estimator.ModeKeys.PREDICT:
         features = tf.transpose(features, [3, 0, 1, 2])  # HWCN to NHWC
 
     # This nested function allows us to avoid duplicating the logic which

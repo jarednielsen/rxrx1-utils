@@ -80,7 +80,7 @@ def input_fn(tf_records_glob,
              input_fn_params,
              params=None,
              use_bfloat16=False,
-             pixel_stats = None,
+             pixel_stats=None,
              transpose_input=True,
              shuffle_buffer=64):
 
