@@ -397,7 +397,6 @@ def main(use_tpu,
       desc = pred_dict['desc']
 
       print(template.format(class_id, 100 * probability, desc))
-      break
 
     tf.logging.info('Finished training up to step %d. Elapsed seconds %d.',
                     train_steps, int(time.time() - start_timestamp))
