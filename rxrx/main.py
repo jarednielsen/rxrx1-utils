@@ -389,7 +389,7 @@ def main(use_tpu,
     for pred_dict in predictions:
       template = ('Prediction is "{}" ({:.1f}%).')
 
-      class_id = pred_dict['class_ids']
+      class_id = pred_dict['classes']
       probability = pred_dict['probabilities'][class_id]
 
       print(template.format(class_id, 100 * probability))
