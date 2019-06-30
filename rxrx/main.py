@@ -46,6 +46,17 @@ DEFAULT_INPUT_FN_PARAMS = {
     'transpose_num_parallel_calls': 128,
     'prefetch_buffer_size': tf.contrib.data.AUTOTUNE,
 }
+DEFAULT_INPUT_FN_PARAMS = {
+    'tfrecord_dataset_buffer_size': 256,
+    'tfrecord_dataset_num_parallel_reads': None,
+    'parallel_interleave_cycle_length': 32,
+    'parallel_interleave_block_length': 1,
+    'parallel_interleave_buffer_output_elements': None,
+    'parallel_interleave_prefetch_input_elements': None,
+    'map_and_batch_num_parallel_calls': 128,
+    'transpose_num_parallel_calls': 128,
+    'prefetch_buffer_size': tf.contrib.data.AUTOTUNE,
+}
 
 # The mean and stds for each of the channels
 GLOBAL_PIXEL_STATS = (np.array([6.74696984, 14.74640167, 10.51260864,
@@ -276,6 +287,7 @@ def main(use_tpu,
          base_learning_rate,
          warmup_epochs,
          input_fn_params=DEFAULT_INPUT_FN_PARAMS,
+         predict_fn_params=DEFAULT_PREDICT_FN_PARAMS,
          resnet_depth=50):
 
     if use_tpu & (tpu is None):
@@ -332,7 +344,7 @@ def main(use_tpu,
         config=config,
         train_batch_size=train_batch_size,
         eval_batch_size=train_batch_size,
-        predict_batch_size=train_batch_size,
+        predict_batch_size=32,
         export_to_tpu=False)
 
 
@@ -352,6 +364,12 @@ def main(use_tpu,
             use_bfloat16=use_bfloat16)
     test_input_fn = functools.partial(rxinput.input_fn,
             input_fn_params=input_fn_params,
+            tf_records_glob=test_glob,
+            pixel_stats=GLOBAL_PIXEL_STATS,
+            transpose_input=transpose_input,
+            use_bfloat16=use_bfloat16)
+    predict_input_fn = functools.partial(rxinput.input_fn,
+            input_fn_params=predict_fn_params,
             tf_records_glob=test_glob,
             pixel_stats=GLOBAL_PIXEL_STATS,
             transpose_input=transpose_input,
