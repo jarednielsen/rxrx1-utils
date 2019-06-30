@@ -70,7 +70,7 @@ def parse_example(value, use_bfloat16=True, pixel_stats=None, no_label=False):
 
     # label = parsed.get("sirna", None)
 
-    return image, None #label
+    return image #label
 
 
 DEFAULT_PARAMS = dict(batch_size=512)
