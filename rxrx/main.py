@@ -120,7 +120,7 @@ def resnet_model_fn(features, labels, mode, params, n_classes, num_train_images,
             'classes': tf.argmax(logits, axis=1),
             'probabilities': tf.nn.softmax(logits, name='softmax_tensor')
         }
-        return tf.estimator.TPUEstimatorSpec(
+        return tf.contrib.tpu.TPUEstimatorSpec(
             mode=mode,
             predictions=predictions,
             export_outputs={
