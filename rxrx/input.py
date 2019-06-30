@@ -119,7 +119,7 @@ def input_fn(tf_records_glob,
             prefetch_input_elements=input_fn_params[
                 'parallel_interleave_prefetch_input_elements']))
 
-    images_dataset = images_dataset.shuffle(2048).repeat()
+    # images_dataset = images_dataset.shuffle(2048).repeat()
 
     # examples dataset
     dataset = images_dataset.apply(
