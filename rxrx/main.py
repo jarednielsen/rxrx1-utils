@@ -365,7 +365,16 @@ def main(use_tpu,
     start_timestamp = time.time()  # This time will include compilation time
 
     # resnet_classifier.train(input_fn=train_input_fn, max_steps=train_steps)
-    resnet_classifier.evaluate(input_fn=test_input_fn, steps=steps_per_epoch)
+    # resnet_classifier.evaluate(input_fn=train_input_fn, steps=steps_per_epoch)
+    predictions = resnet_classifier.predict(input_fn=test_input_fn)
+
+    for pred_dict in predictions:
+      template = ('Prediction is "{}" ({:.1f}%).')
+
+      class_id = pred_dict['class_ids']
+      probability = pred_dict['probabilities'][class_id]
+
+      print(template.format(class_id, 100 * probability))
 
     tf.logging.info('Finished training up to step %d. Elapsed seconds %d.',
                     train_steps, int(time.time() - start_timestamp))
