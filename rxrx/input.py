@@ -42,17 +42,17 @@ def set_shapes(transpose_input, batch_size, images, labels):
 
     return images, labels
 
-def parse_example(value, use_bfloat16=True, pixel_stats=None):
+def parse_example(value, use_bfloat16=True, pixel_stats=None, no_label=False):
 
     keys_to_features = {
         'image': tf.FixedLenFeature((), tf.string),
-        'well': tf.FixedLenFeature((), tf.string),
-        'well_type': tf.FixedLenFeature((), tf.string),
-        'plate': tf.FixedLenFeature((), tf.int64),
-        'site': tf.FixedLenFeature((), tf.int64),
-        'cell_type': tf.FixedLenFeature((), tf.string),
-        'sirna': tf.FixedLenFeature((), tf.int64),
-        'experiment': tf.FixedLenFeature((), tf.string)
+        # 'well': tf.FixedLenFeature((), tf.string),
+        # 'well_type': tf.FixedLenFeature((), tf.string),
+        # 'plate': tf.FixedLenFeature((), tf.int64),
+        # 'site': tf.FixedLenFeature((), tf.int64),
+        # 'cell_type': tf.FixedLenFeature((), tf.string),
+        # 'sirna': tf.FixedLenFeature((), tf.int64),
+        # 'experiment': tf.FixedLenFeature((), tf.string)
     }
 
     image_shape = [512, 512, 6]
@@ -68,9 +68,9 @@ def parse_example(value, use_bfloat16=True, pixel_stats=None):
     if use_bfloat16:
         image = tf.image.convert_image_dtype(image, dtype=tf.bfloat16)
 
-    label = parsed.get("sirna", None)
+    # label = parsed.get("sirna", None)
 
-    return image, label
+    return image, None #label
 
 
 DEFAULT_PARAMS = dict(batch_size=512)
