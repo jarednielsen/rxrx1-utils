@@ -120,7 +120,7 @@ def resnet_model_fn(features, labels, mode, params, n_classes, num_train_images,
             'classes': tf.argmax(logits, axis=1),
             'probabilities': tf.nn.softmax(logits, name='softmax_tensor')
         }
-        return tf.estimator.EstimatorSpec(
+        return tf.estimator.TPUEstimatorSpec(
             mode=mode,
             predictions=predictions,
             export_outputs={
@@ -372,7 +372,7 @@ def main(use_tpu,
             input_fn_params=predict_fn_params,
             tf_records_glob=test_glob,
             pixel_stats=GLOBAL_PIXEL_STATS,
-            transpose_input=False,
+            transpose_input=transpose_input,
             use_bfloat16=use_bfloat16)
 
 
