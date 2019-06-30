@@ -366,7 +366,7 @@ def main(use_tpu,
 
     # resnet_classifier.train(input_fn=train_input_fn, max_steps=train_steps)
     # resnet_classifier.evaluate(input_fn=train_input_fn, steps=steps_per_epoch)
-    predictions = resnet_classifier.predict(input_fn=test_input_fn)
+    predictions = resnet_classifier.predict(input_fn=train_input_fn)
 
     for pred_dict in predictions:
       template = ('Prediction is "{}" ({:.1f}%).')
