@@ -365,7 +365,7 @@ def main(use_tpu,
     start_timestamp = time.time()  # This time will include compilation time
 
     # resnet_classifier.train(input_fn=train_input_fn, max_steps=train_steps)
-    resnet_classifier.evaluate(input_fn=train_input_fn, steps=steps_per_epoch)
+    resnet_classifier.evaluate(input_fn=test_input_fn, steps=steps_per_epoch)
 
     tf.logging.info('Finished training up to step %d. Elapsed seconds %d.',
                     train_steps, int(time.time() - start_timestamp))
