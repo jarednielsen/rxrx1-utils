@@ -46,17 +46,20 @@ def parse_example(value, use_bfloat16=True, pixel_stats=None, no_label=False):
 
     keys_to_features = {
         'image': tf.FixedLenFeature((), tf.string),
-        # 'well': tf.FixedLenFeature((), tf.string),
-        # 'well_type': tf.FixedLenFeature((), tf.string),
-        # 'plate': tf.FixedLenFeature((), tf.int64),
-        # 'site': tf.FixedLenFeature((), tf.int64),
-        # 'cell_type': tf.FixedLenFeature((), tf.string),
-        # 'sirna': tf.FixedLenFeature((), tf.int64),
-        # 'experiment': tf.FixedLenFeature((), tf.string)
+        'well': tf.FixedLenFeature((), tf.string),
+        'well_type': tf.FixedLenFeature((), tf.string),
+        'plate': tf.FixedLenFeature((), tf.int64),
+        'site': tf.FixedLenFeature((), tf.int64),
+        'cell_type': tf.FixedLenFeature((), tf.string),
+        'sirna': tf.FixedLenFeature((), tf.int64),
+        'experiment': tf.FixedLenFeature((), tf.string),
     }
 
     image_shape = [512, 512, 6]
     parsed = tf.parse_single_example(value, keys_to_features)
+    # experiment_plate_well, fx HEPG2-08_1_B03
+    desc = tf.strings.format("{}_{}_{}", (experiment, plate, well))
+    tf.logging.info(desc)
     image_raw = tf.decode_raw(parsed['image'], tf.uint8)
     image = tf.reshape(image_raw, image_shape)
     image.set_shape(image_shape)
@@ -68,8 +71,10 @@ def parse_example(value, use_bfloat16=True, pixel_stats=None, no_label=False):
     if use_bfloat16:
         image = tf.image.convert_image_dtype(image, dtype=tf.bfloat16)
 
-    # label = parsed["sirna"]
-    label = tf.constant(1, dtype=tf.int64)
+    if no_label:
+        label = tf.constant(1, dtype=tf.int64)
+    else:
+        label = parsed["sirna"]
 
     return image, label
 
@@ -84,7 +89,7 @@ def input_fn(tf_records_glob,
              pixel_stats=None,
              transpose_input=True,
              shuffle_buffer=64,
-             has_labels=True):
+             no_label=False):
 
     batch_size = params['batch_size']
 
@@ -118,7 +123,8 @@ def input_fn(tf_records_glob,
         tf.contrib.data.map_and_batch(
             lambda value: parse_example(value,
                                         use_bfloat16=use_bfloat16,
-                                        pixel_stats=pixel_stats),
+                                        pixel_stats=pixel_stats,
+                                        no_label=no_label),
             batch_size=batch_size,
             num_parallel_calls=input_fn_params['map_and_batch_num_parallel_calls'],
             drop_remainder=True))

@@ -373,7 +373,8 @@ def main(use_tpu,
             tf_records_glob=test_glob,
             pixel_stats=GLOBAL_PIXEL_STATS,
             transpose_input=transpose_input,
-            use_bfloat16=use_bfloat16)
+            use_bfloat16=use_bfloat16,
+            no_label=True)
 
 
     tf.logging.info('Training for %d steps (%.2f epochs in total). Current'
@@ -393,6 +394,7 @@ def main(use_tpu,
       probability = pred_dict['probabilities'][class_id]
 
       print(template.format(class_id, 100 * probability))
+      break
 
     tf.logging.info('Finished training up to step %d. Elapsed seconds %d.',
                     train_steps, int(time.time() - start_timestamp))
