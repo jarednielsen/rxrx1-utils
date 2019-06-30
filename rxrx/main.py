@@ -84,7 +84,7 @@ def resnet_model_fn(features, labels, mode, params, n_classes, num_train_images,
     Returns:
         A `TPUEstimatorSpec` for the model
     """
-    features = features['image']
+    features, desc = features['image'], features['desc']
     if isinstance(features, dict):
         features = features['feature']
 
@@ -119,7 +119,8 @@ def resnet_model_fn(features, labels, mode, params, n_classes, num_train_images,
     if mode == tf.estimator.ModeKeys.PREDICT:
         predictions = {
             'classes': tf.argmax(logits, axis=1),
-            'probabilities': tf.nn.softmax(logits, name='softmax_tensor')
+            'probabilities': tf.nn.softmax(logits, name='softmax_tensor'),
+            'desc': desc
         }
         return tf.contrib.tpu.TPUEstimatorSpec(
             mode=mode,
@@ -393,8 +394,9 @@ def main(use_tpu,
 
       class_id = pred_dict['classes']
       probability = pred_dict['probabilities'][class_id]
+      desc = pred_dict['desc']
 
-      print(template.format(class_id, 100 * probability))
+      print(template.format(class_id, 100 * probability, desc))
       break
 
     tf.logging.info('Finished training up to step %d. Elapsed seconds %d.',
