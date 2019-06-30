@@ -74,11 +74,15 @@ def parse_example(value, use_bfloat16=True, pixel_stats=None, no_label=False):
 
     if no_label:
         label = tf.constant(1, dtype=tf.int64)
-        label = desc
     else:
         label = parsed["sirna"]
 
-    return image, label
+    features = {
+        'image': image,
+        'desc': desc
+    }
+
+    return features, label
 
 
 DEFAULT_PARAMS = dict(batch_size=512)
