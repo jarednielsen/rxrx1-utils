@@ -68,7 +68,7 @@ def parse_example(value, use_bfloat16=True, pixel_stats=None):
     if use_bfloat16:
         image = tf.image.convert_image_dtype(image, dtype=tf.bfloat16)
 
-    label = parsed["sirna"]
+    label = parsed.get("sirna", None)
 
     return image, label
 
@@ -82,7 +82,8 @@ def input_fn(tf_records_glob,
              use_bfloat16=False,
              pixel_stats=None,
              transpose_input=True,
-             shuffle_buffer=64):
+             shuffle_buffer=64,
+             has_labels=True):
 
     batch_size = params['batch_size']
 
