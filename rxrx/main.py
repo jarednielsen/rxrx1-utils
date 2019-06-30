@@ -135,7 +135,6 @@ def resnet_model_fn(features, labels, mode, params, n_classes, num_train_images,
     predictions = tf.argmax(logits, axis=1)
     accuracy = tf.metrics.accuracy(labels, predictions)
 
-    host_call = None
     if mode == tf.estimator.ModeKeys.TRAIN:
         # Compute the current epoch and associated learning rate from global_step.
         global_step = tf.train.get_global_step()
@@ -216,28 +215,28 @@ def resnet_model_fn(features, labels, mode, params, n_classes, num_train_images,
         acc_t = tf.reshape(accuracy, [1])
 
         host_call = (host_call_fn, [gs_t, loss_t, lr_t, ce_t, acc_t])
+        return tf.contrib.tpu.TPUEstimatorSpec(
+            mode=mode,
+            loss=loss,
+            train_op=train_op,
+            host_call=host_call)
 
-    else:
-        train_op = None
-
-    eval_metrics = None
-    if True: #mode == tf.estimator.ModeKeys.EVAL:
-
+    if mode == tf.estimator.ModeKeys.EVAL:
         def metric_fn(labels, logits):
             """Evaluation metric function. Evaluates accuracy.
-      This function is executed on the CPU and should not directly reference
-      any Tensors in the rest of the `model_fn`. To pass Tensors from the model
-      to the `metric_fn`, provide as part of the `eval_metrics`. See
-      https://www.tensorflow.org/api_docs/python/tf/contrib/tpu/TPUEstimatorSpec
-      for more information.
-      Arguments should match the list of `Tensor` objects passed as the second
-      element in the tuple passed to `eval_metrics`.
-      Args:
-        labels: `Tensor` with shape `[batch]`.
-        logits: `Tensor` with shape `[batch, num_classes]`.
-      Returns:
-        A dict of the metrics to return from evaluation.
-      """
+            This function is executed on the CPU and should not directly reference
+            any Tensors in the rest of the `model_fn`. To pass Tensors from the model
+            to the `metric_fn`, provide as part of the `eval_metrics`. See
+            https://www.tensorflow.org/api_docs/python/tf/contrib/tpu/TPUEstimatorSpec
+            for more information.
+            Arguments should match the list of `Tensor` objects passed as the second
+            element in the tuple passed to `eval_metrics`.
+            Args:
+                labels: `Tensor` with shape `[batch]`.
+                logits: `Tensor` with shape `[batch, num_classes]`.
+            Returns:
+                A dict of the metrics to return from evaluation.
+            """
             predictions = tf.argmax(logits, axis=1)
             top_1_accuracy = tf.metrics.accuracy(labels, predictions)
             in_top_5 = tf.cast(tf.nn.in_top_k(logits, labels, 5), tf.float32)
@@ -250,12 +249,10 @@ def resnet_model_fn(features, labels, mode, params, n_classes, num_train_images,
 
         eval_metrics = (metric_fn, [labels, logits])
 
-    return tf.contrib.tpu.TPUEstimatorSpec(
-        mode=mode,
-        loss=loss,
-        train_op=train_op,
-        host_call=host_call,
-        eval_metrics=eval_metrics)
+        return tf.contrib.tpu.TPUEstimatorSpec(
+            mode=mode,
+            loss=loss,
+            eval_metrics=eval_metrics)
 
 def main(use_tpu,
          tpu,
@@ -365,8 +362,8 @@ def main(use_tpu,
 
     start_timestamp = time.time()  # This time will include compilation time
 
-    resnet_classifier.train(input_fn=train_input_fn, max_steps=train_steps)
-    # resnet_classifier.evaluate(input_fn=test_input_fn, )
+    # resnet_classifier.train(input_fn=train_input_fn, max_steps=train_steps)
+    resnet_classifier.evaluate(input_fn=train_input_fn, max_steps=steps_per_epoch)
 
     tf.logging.info('Finished training up to step %d. Elapsed seconds %d.',
                     train_steps, int(time.time() - start_timestamp))
@@ -376,16 +373,16 @@ def main(use_tpu,
     tf.logging.info('Finished training up to step %d. Elapsed seconds %d.',
                     train_steps, elapsed_time)
 
-    tf.logging.info('Exporting SavedModel.')
+    # tf.logging.info('Exporting SavedModel.')
 
-    def serving_input_receiver_fn():
-        features = {
-          'feature': tf.placeholder(dtype=tf.float32, shape=[None, 512, 512, 6]),
-        }
-        receiver_tensors = features
-        return tf.estimator.export.ServingInputReceiver(features, receiver_tensors)
+    # def serving_input_receiver_fn():
+    #     features = {
+    #       'feature': tf.placeholder(dtype=tf.float32, shape=[None, 512, 512, 6]),
+    #     }
+    #     receiver_tensors = features
+    #     return tf.estimator.export.ServingInputReceiver(features, receiver_tensors)
 
-    resnet_classifier.export_saved_model(os.path.join(model_dir, 'saved_model'), serving_input_receiver_fn)
+    # resnet_classifier.export_saved_model(os.path.join(model_dir, 'saved_model'), serving_input_receiver_fn)
 
 
 if __name__ == '__main__':
