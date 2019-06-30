@@ -51,9 +51,10 @@ def parse_example(value, use_bfloat16=True, pixel_stats=None, no_label=False):
         'plate': tf.FixedLenFeature((), tf.int64),
         'site': tf.FixedLenFeature((), tf.int64),
         'cell_type': tf.FixedLenFeature((), tf.string),
-        'sirna': tf.FixedLenFeature((), tf.int64),
         'experiment': tf.FixedLenFeature((), tf.string),
     }
+    if not no_label:
+        keys_to_features['sirna'] = tf.FixedLenFeature((), tf.int64)
 
     image_shape = [512, 512, 6]
     parsed = tf.parse_single_example(value, keys_to_features)
@@ -73,6 +74,7 @@ def parse_example(value, use_bfloat16=True, pixel_stats=None, no_label=False):
 
     if no_label:
         label = tf.constant(1, dtype=tf.int64)
+        label = desc
     else:
         label = parsed["sirna"]
 
