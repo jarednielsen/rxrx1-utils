@@ -94,8 +94,8 @@ def parse_example(value, use_bfloat16=True, pixel_stats=None, no_label=False):
 
     parsed['image'] = image
 
-    return parsed, label
-    # return image, label
+    # return parsed, label
+    return image, label
 
 
 DEFAULT_PARAMS = dict(batch_size=512)
@@ -110,8 +110,7 @@ def input_fn(tf_records_glob,
              shuffle_buffer=64,
              no_label=False):
 
-    # batch_size = params['batch_size']
-    batch_size = 32
+    batch_size = params['batch_size']
 
     filenames_dataset = tf.data.Dataset.list_files(tf_records_glob)
 
@@ -166,7 +165,7 @@ def input_fn(tf_records_glob,
 
 
 def predict_input_fn(images_glob):
-    batch_size = params['batch_size']
+    batch_size = 32 #params['batch_size']
 
     filenames_dataset = tf.data.Dataset.list_files(tf_records_glob)
 
