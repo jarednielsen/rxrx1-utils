@@ -164,7 +164,14 @@ def input_fn(tf_records_glob,
     return dataset
 
 
-def predict_input_fn(tf_records_glob):
+def predict_input_fn(tf_records_glob,
+             input_fn_params,
+             params=None,
+             use_bfloat16=False,
+             pixel_stats=None,
+             transpose_input=True,
+             shuffle_buffer=64,
+             no_label=False):
     batch_size = 32 #params['batch_size']
 
     filenames_dataset = tf.data.Dataset.list_files(tf_records_glob)
