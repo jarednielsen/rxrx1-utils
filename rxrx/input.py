@@ -42,6 +42,22 @@ def set_shapes(transpose_input, batch_size, images, labels):
 
     return images, labels
 
+def get_description(value):
+    keys_to_features = {
+        'image': tf.FixedLenFeature((), tf.string),
+        'well': tf.FixedLenFeature((), tf.string),
+        'well_type': tf.FixedLenFeature((), tf.string),
+        'plate': tf.FixedLenFeature((), tf.int64),
+        'site': tf.FixedLenFeature((), tf.int64),
+        'cell_type': tf.FixedLenFeature((), tf.string),
+        'experiment': tf.FixedLenFeature((), tf.string),
+    }
+
+    parsed = tf.parse_single_example(value, keys_to_features)
+    # experiment_plate_well, fx HEPG2-08_1_B03
+    desc = tf.strings.format("{}_{}_{}", (parsed['experiment'], parsed['plate'], parsed['well']))
+    return desc
+
 def parse_example(value, use_bfloat16=True, pixel_stats=None, no_label=False):
 
     keys_to_features = {
@@ -149,4 +165,62 @@ def input_fn(tf_records_glob,
 
 
 def predict_input_fn(images_glob):
-    pass
+    batch_size = params['batch_size']
+
+    filenames_dataset = tf.data.Dataset.list_files(tf_records_glob)
+
+    def fetch_images(filenames):
+        dataset = tf.data.TFRecordDataset(
+            filenames,
+            compression_type="GZIP",
+            buffer_size=(1000 * 1000 *
+                         input_fn_params['tfrecord_dataset_buffer_size']),
+            num_parallel_reads=input_fn_params[
+                'tfrecord_dataset_num_parallel_reads'])
+        return dataset
+
+    images_dataset = filenames_dataset.apply(
+        tf.contrib.data.parallel_interleave(
+            fetch_images,
+            cycle_length=input_fn_params['parallel_interleave_cycle_length'],
+            block_length=input_fn_params['parallel_interleave_block_length'],
+            sloppy=True,
+            buffer_output_elements=input_fn_params[
+                'parallel_interleave_buffer_output_elements'],
+            prefetch_input_elements=input_fn_params[
+                'parallel_interleave_prefetch_input_elements']))
+
+    # examples dataset
+    dataset = images_dataset.apply(
+        tf.contrib.data.map_and_batch(
+            lambda value: parse_example(value,
+                                        use_bfloat16=use_bfloat16,
+                                        pixel_stats=pixel_stats,
+                                        no_label=no_label),
+            batch_size=batch_size,
+            num_parallel_calls=input_fn_params['map_and_batch_num_parallel_calls'],
+            drop_remainder=True))
+
+    filenames = dataset.apply(
+        tf.contrib.data.map_and_batch(
+            lambda value: get_description(value),
+            batch_size=batch_size,
+            num_parallel_calls=input_fn_params['map_and_batch_num_parallel_calls'],
+            drop_remainder=False
+        )
+    )
+
+    # Transpose for performance on TPU
+    if transpose_input:
+        dataset = dataset.map(
+            lambda images, labels: (tf.transpose(images, [1, 2, 3, 0]), labels),
+            num_parallel_calls=input_fn_params['transpose_num_parallel_calls'])
+
+    # Assign static batch size dimension
+    # dataset = dataset.map(partial(set_shapes, transpose_input, batch_size))
+
+    # Prefetch overlaps in-feed with training
+    dataset = dataset.prefetch(
+        buffer_size=input_fn_params['prefetch_buffer_size'])
+
+    return dataset
