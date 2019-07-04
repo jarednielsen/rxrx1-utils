@@ -110,7 +110,8 @@ def input_fn(tf_records_glob,
              shuffle_buffer=64,
              no_label=False):
 
-    batch_size = params['batch_size']
+    # batch_size = params['batch_size']
+    batch_size = 32
 
     filenames_dataset = tf.data.Dataset.list_files(tf_records_glob)
 
