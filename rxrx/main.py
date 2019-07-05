@@ -266,13 +266,16 @@ def resnet_model_fn(features, labels, mode, params, n_classes, num_train_images,
             loss=loss,
             eval_metrics=eval_metrics)
 
+def tf_string_to_normal_string(tf_string):
+    return tf_string.decode('utf-8').replace('"', '')
+
 def write_df_to_gcs(df, gcs_path):
     from google.cloud import storage
     client = storage.Client(project='cellsignal')
     bucket = client.get_bucket('cellsignal')
 
     df = pd.DataFrame(df)
-    df.to_csv('tmp.csv')
+    df.to_csv('tmp.csv', index=False)
     local_tmp_path = ('tmp.csv')
     target_blob = bucket.blob(gcs_path)
     target_blob.upload_from_file(open(local_tmp_path, 'r'))
@@ -416,9 +419,6 @@ def main(use_tpu,
         predictions = resnet_classifier.predict(input_fn=predict_input_fn,
             yield_single_examples=True)
 
-        def tf_string_to_normal_string(tf_string):
-            return tf_string.decode('utf-8').strip('"')
-
         df = []
         with tf.Session() as sess:
             for i, pred_dict in enumerate(predictions):
@@ -432,8 +432,8 @@ def main(use_tpu,
                 # template = 'Prediction is "{}" ({:.1f}%) - {}'
                 # print(template.format(class_id, 100 * probability, label_batch[0]))
                 row = {
-                    'id_code': class_id,
-                    'sirna': tf_string_to_normal_string(label_batch[0])
+                    'id_code': tf_string_to_normal_string(label_batch[0]),
+                    'sirna': class_id
                 }
                 df.append(row)
 
