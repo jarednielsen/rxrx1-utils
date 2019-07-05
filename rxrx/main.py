@@ -28,6 +28,7 @@ import time
 import argparse
 
 import numpy as np
+import pandas as pd
 import tensorflow as tf
 from tensorflow.contrib import summary
 from tensorflow.python.estimator import estimator
@@ -265,6 +266,16 @@ def resnet_model_fn(features, labels, mode, params, n_classes, num_train_images,
             loss=loss,
             eval_metrics=eval_metrics)
 
+def write_df_to_gcs(df, gcs_path):
+    from google.cloud import storage
+    client = storage.Client(project='cellsignal')
+    bucket = client.get_bucket('cellsignal')
+
+    df.to_csv('tmp.csv')
+    local_tmp_path = ('tmp.csv')
+    target_blob = bucket.blob(gcs_path)
+    target_blob.upload_from_file(open(local_tmp_path, 'r'))
+
 def main(use_tpu,
          tpu,
          gcp_project,
@@ -403,6 +414,7 @@ def main(use_tpu,
         predict_labels_iterator = predict_labels_dataset.make_one_shot_iterator()
         predictions = resnet_classifier.predict(input_fn=predict_input_fn)
 
+        df = []
         with tf.Session() as sess:
             for i, pred_dict in enumerate(predictions):
                 template = ('Prediction is "{}" ({:.1f}%) - {}')
@@ -413,8 +425,15 @@ def main(use_tpu,
                 print(label_batch)
 
                 print(template.format(class_id, 100 * probability, label_batch[0]))
+                row = {
+                    'pred': class_id,
+                    'label': label_batch[0]
+                }
+                df.append(row)
+
                 if i == 5:
                     break
+        write_df_to_gcs(df=df, gcs='predictions/v5.csv')
 
     else:
         raise ValueError("Method was {}".format(method))
