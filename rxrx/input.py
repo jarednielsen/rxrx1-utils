@@ -58,7 +58,7 @@ def get_description(value):
     desc = tf.strings.format("{}_{}_{}", (parsed['experiment'], parsed['plate'], parsed['well']))
     return desc
 
-def parse_example(value, use_bfloat16=True, pixel_stats=None, no_label=False):
+def parse_example(value, use_bfloat16=True, pixel_stats=None, desc_instead_of_label=False):
 
     keys_to_features = {
         'image': tf.FixedLenFeature((), tf.string),
@@ -69,13 +69,13 @@ def parse_example(value, use_bfloat16=True, pixel_stats=None, no_label=False):
         'cell_type': tf.FixedLenFeature((), tf.string),
         'experiment': tf.FixedLenFeature((), tf.string),
     }
-    if not no_label:
+    if not desc_instead_of_label:
         keys_to_features['sirna'] = tf.FixedLenFeature((), tf.int64)
 
     image_shape = [512, 512, 6]
     parsed = tf.parse_single_example(value, keys_to_features)
     # experiment_plate_well, fx HEPG2-08_1_B03
-    parsed['desc'] = tf.strings.format("{}_{}_{}", (parsed['experiment'], parsed['plate'], parsed['well']))
+    desc = tf.strings.format("{}_{}_{}", (parsed['experiment'], parsed['plate'], parsed['well']))
     image_raw = tf.decode_raw(parsed['image'], tf.uint8)
     image = tf.reshape(image_raw, image_shape)
     image.set_shape(image_shape)
@@ -87,15 +87,11 @@ def parse_example(value, use_bfloat16=True, pixel_stats=None, no_label=False):
     if use_bfloat16:
         image = tf.image.convert_image_dtype(image, dtype=tf.bfloat16)
 
-    if no_label:
-        label = tf.constant(1, dtype=tf.int64)
+    if desc_instead_of_label:
+        return image, desc
     else:
-        label = parsed["sirna"]
-
-    parsed['image'] = image
-
-    # return parsed, label
-    return image, label
+        label = parsed['sirna']
+        return image, label
 
 
 DEFAULT_PARAMS = dict(batch_size=512)
@@ -108,11 +104,17 @@ def input_fn(tf_records_glob,
              pixel_stats=None,
              transpose_input=True,
              shuffle_buffer=64,
-             no_label=False):
+             desc_instead_of_label=False,
+             deterministic_oneshot=False):
+    """
+    Use deterministic_oneshot to save predictions, when we don't have a
+    label.
+    """
 
     batch_size = params['batch_size']
 
-    filenames_dataset = tf.data.Dataset.list_files(tf_records_glob)
+    filenames_dataset = tf.data.Dataset.list_files(tf_records_glob,
+        shuffle=not deterministic_oneshot)
 
     def fetch_images(filenames):
         dataset = tf.data.TFRecordDataset(
@@ -129,13 +131,14 @@ def input_fn(tf_records_glob,
             fetch_images,
             cycle_length=input_fn_params['parallel_interleave_cycle_length'],
             block_length=input_fn_params['parallel_interleave_block_length'],
-            sloppy=True,
+            sloppy=not deterministic_oneshot,
             buffer_output_elements=input_fn_params[
                 'parallel_interleave_buffer_output_elements'],
             prefetch_input_elements=input_fn_params[
                 'parallel_interleave_prefetch_input_elements']))
 
-    # images_dataset = images_dataset.shuffle(2048).repeat()
+    if not deterministic_oneshot:
+        images_dataset = images_dataset.shuffle(2048).repeat()
 
     # examples dataset
     dataset = images_dataset.apply(
@@ -143,7 +146,7 @@ def input_fn(tf_records_glob,
             lambda value: parse_example(value,
                                         use_bfloat16=use_bfloat16,
                                         pixel_stats=pixel_stats,
-                                        no_label=no_label),
+                                        desc_instead_of_label=desc_instead_of_label),
             batch_size=batch_size,
             num_parallel_calls=input_fn_params['map_and_batch_num_parallel_calls'],
             drop_remainder=True))
