@@ -400,7 +400,7 @@ def main(use_tpu,
     predict_labels_dataset = rxinput.input_fn(
             input_fn_params=predict_fn_params,
             tf_records_glob=test_glob,
-            params=dict(batch_size=train_batch_size // 8),
+            params=dict(batch_size=train_batch_size),
             pixel_stats=GLOBAL_PIXEL_STATS,
             transpose_input=transpose_input,
             use_bfloat16=use_bfloat16,
