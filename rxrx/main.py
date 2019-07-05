@@ -146,7 +146,7 @@ def resnet_model_fn(features, labels, mode, params, n_classes, num_train_images,
     ])
 
     predictions = tf.argmax(logits, axis=1)
-    accuracy = tf.metrics.accuracy(labels, predictions)
+    accuracy, _ = tf.metrics.accuracy(labels, predictions)
 
     if mode == tf.estimator.ModeKeys.TRAIN:
         # Compute the current epoch and associated learning rate from global_step.
@@ -370,10 +370,14 @@ def main(use_tpu,
 
     use_bfloat16 = (tf_precision == 'bfloat16')
 
-    train_glob = os.path.join(url_base_path, 'train', '*.tfrecord')
+    holdout_exp = 'U2OS-5'
+    # See https://stackoverflow.com/questions/406230/regular-expression-to-match-a-line-that-doesnt-contain-a-word/406408#406408
+    train_glob = os.path.join(url_base_path, 'by_plate_site-42', '(?!{}).*.tfrecord'.format(holdout_exp))
+    eval_glob = os.path.join(url_base_path, 'by_plate_site-42', '{}*.tfrecord'.format(holdout_exp))
     test_glob = os.path.join(url_base_path, 'test', '*.tfrecord')
 
     tf.logging.info("Train glob: {}".format(train_glob))
+    tf.logging.info("Eval glob: {}".format(eval_glob))
     tf.logging.info("Test glob: {}".format(test_glob))
 
     train_input_fn = functools.partial(rxinput.input_fn,
@@ -382,7 +386,7 @@ def main(use_tpu,
             pixel_stats=GLOBAL_PIXEL_STATS,
             transpose_input=transpose_input,
             use_bfloat16=use_bfloat16)
-    test_input_fn = functools.partial(rxinput.input_fn,
+    eval_input_fn = functools.partial(rxinput.input_fn,
             input_fn_params=input_fn_params,
             tf_records_glob=test_glob,
             pixel_stats=GLOBAL_PIXEL_STATS,
@@ -417,48 +421,12 @@ def main(use_tpu,
     if method == 'train':
         resnet_classifier.train(input_fn=train_input_fn, max_steps=train_steps)
     elif method == 'evaluate':
-        resnet_classifier.evaluate(input_fn=train_input_fn, steps=steps_per_epoch)
+        resnet_classifier.evaluate(input_fn=eval_input_fn, steps=steps_per_epoch)
     elif method == 'predict':
         predict_labels_iterator = predict_labels_dataset.make_one_shot_iterator()
         next_element = predict_labels_iterator.get_next()
         predictions = resnet_classifier.predict(input_fn=predict_input_fn,
             yield_single_examples=False)
-
-        # df1 = []
-        # for i, pred_dict in enumerate(predictions):
-        #     # Get current image prediction
-        #     class_id = pred_dict['classes']
-        #     probability = pred_dict['probabilities'][class_id]
-        #     row = {
-        #         'sirna': class_id,
-        #         'probability': probability
-        #     }
-        #     df1.append(row)
-
-        # df2 = []
-        # with tf.Session() as sess:
-        #     try:
-        #         i = 0
-        #         while i < len(df1):
-        #             # Get current image id
-        #             image_batch, label_batch = next_element
-        #             label_batch = sess.run(label_batch)
-        #             # print(label_batch)
-        #             id_code, site = parse_tf_string(label_batch[0])
-
-        #             row = {
-        #                 'id_code': id_code,
-        #                 'site': site
-        #             }
-        #             df2.append(row)
-        #             i += 1
-        #     except tf.errors.OutOfRangeError:
-        #         pass
-
-        # df1 = pd.DataFrame(df1)
-        # df2 = pd.DataFrame(df2)
-        # df = pd.concate((df1, df2), axis='columns')
-        # write_df_to_gcs(df=df, gcs_path='predictions/v5.csv')
 
 
         df = []
@@ -479,6 +447,7 @@ def main(use_tpu,
                         id_codes.append(id_code)
                         sites.append(site)
 
+                    assert len(id_codes) == len(class_ids), "Two datasets must have equal batch sizes"
                     for id_code, class_id, probability, site in zip(id_codes, class_ids, probabilities, sites):
                         row = {
                             'id_code': id_code,
@@ -488,12 +457,11 @@ def main(use_tpu,
                         }
                         df.append(row)
 
-                    if i % 100 == 0:
+                    if i % 10 == 0:
                         write_df_to_gcs(df=df, gcs_path='predictions/v5.csv')
-                        # break
+
+                write_df_to_gcs(df=df, gcs_path='predictions/v5.csv')
             except tf.errors.OutOfRangeError:
-                pass
-            finally:
                 write_df_to_gcs(df=df, gcs_path='predictions/v5.csv')
 
     else:
