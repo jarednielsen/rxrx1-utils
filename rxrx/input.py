@@ -58,7 +58,7 @@ def get_description(value):
     desc = tf.strings.format("{}_{}_{}", (parsed['experiment'], parsed['plate'], parsed['well']))
     return desc
 
-def parse_example(value, use_bfloat16=True, pixel_stats=None, desc_instead_of_label=False):
+def parse_example(value, use_bfloat16=True, pixel_stats=None, dummy_label=False, desc_instead_of_label=False):
 
     keys_to_features = {
         'image': tf.FixedLenFeature((), tf.string),
@@ -69,7 +69,7 @@ def parse_example(value, use_bfloat16=True, pixel_stats=None, desc_instead_of_la
         'cell_type': tf.FixedLenFeature((), tf.string),
         'experiment': tf.FixedLenFeature((), tf.string),
     }
-    if not desc_instead_of_label:
+    if not dummy_label and not desc_instead_of_label:
         keys_to_features['sirna'] = tf.FixedLenFeature((), tf.int64)
 
     image_shape = [512, 512, 6]
@@ -90,7 +90,10 @@ def parse_example(value, use_bfloat16=True, pixel_stats=None, desc_instead_of_la
     if desc_instead_of_label:
         return image, desc
     else:
-        label = parsed['sirna']
+        if dummy_label:
+            label = tf.constant(1, dtype=tf.int64)
+        else:
+            label = parsed['sirna']
         return image, label
 
 
@@ -104,6 +107,7 @@ def input_fn(tf_records_glob,
              pixel_stats=None,
              transpose_input=True,
              shuffle_buffer=64,
+             dummy_label=False,
              desc_instead_of_label=False,
              deterministic_oneshot=False):
     """
@@ -146,6 +150,7 @@ def input_fn(tf_records_glob,
             lambda value: parse_example(value,
                                         use_bfloat16=use_bfloat16,
                                         pixel_stats=pixel_stats,
+                                        dummy_label=dummy_label,
                                         desc_instead_of_label=desc_instead_of_label),
             batch_size=batch_size,
             num_parallel_calls=input_fn_params['map_and_batch_num_parallel_calls'],
