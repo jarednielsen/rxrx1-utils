@@ -417,7 +417,7 @@ def main(use_tpu,
             yield_single_examples=True)
 
         def tf_string_to_normal_string(tf_string):
-            return tf_string.encode('utf-8').strip('"')
+            return tf_string.decode('utf-8').strip('"')
 
         df = []
         with tf.Session() as sess:
