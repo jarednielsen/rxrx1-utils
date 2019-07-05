@@ -432,7 +432,7 @@ def main(use_tpu,
                 df.append(row)
 
                 if i == 5:
-                    write_df_to_gcs(df=df, gcs='predictions/v5.csv')
+                    write_df_to_gcs(df=df, gcs_path='predictions/v5.csv')
                     break
 
     else:
