@@ -410,7 +410,7 @@ def main(use_tpu,
                 class_id = pred_dict['classes']
                 probability = pred_dict['probabilities'][class_id]
                 image_batch, label_batch = sess.run(predict_labels_iterator.get_next())
-                print(sess.run(label_batch))
+                print(label_batch)
 
                 print(template.format(class_id, 100 * probability, label_batch[0]))
                 if i == 5:
