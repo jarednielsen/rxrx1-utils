@@ -373,6 +373,7 @@ def main(use_tpu,
     holdout_exp = 'U2OS-05'
     # See https://stackoverflow.com/questions/406230/regular-expression-to-match-a-line-that-doesnt-contain-a-word/406408#406408
     train_glob = os.path.join(url_base_path, 'by_exp_plate_site-42', '(?!{}).*.tfrecord'.format(holdout_exp))
+    train_glob = os.path.join(url_base_path, 'by_exp_plate_site-42', '*.tfrecord')
     eval_glob = os.path.join(url_base_path, 'by_exp_plate_site-42', '{}*.tfrecord'.format(holdout_exp))
     test_glob = os.path.join(url_base_path, 'test', '*.tfrecord')
 
