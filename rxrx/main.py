@@ -422,27 +422,33 @@ def main(use_tpu,
 
         df = []
         with tf.Session() as sess:
-            # for i, pred_dict in enumerate(predictions):
-            for i in range(100000):
-                # class_id = pred_dict['classes']
-                # probability = pred_dict['probabilities'][class_id]
-                image_batch, label_batch = next_element
-                label_batch = sess.run(label_batch)
-                id_code = tf_string_to_normal_string(label_batch[0])
-                print(id_code)
+            try:
+                # while True:
+                for i, pred_dict in enumerate(predictions):
+                    # Get current image prediction
+                    class_id = pred_dict['classes']
+                    probability = pred_dict['probabilities'][class_id]
+                    # Get current image id
+                    image_batch, label_batch = next_element
+                    label_batch = sess.run(label_batch)
+                    id_code = tf_string_to_normal_string(label_batch[0])
+                    # print(id_code)
 
-                # template = 'Prediction is "{}" ({:.1f}%) - {}'
-                # print(template.format(class_id, 100 * probability, label_batch[0]))
-                row = {
-                    'id_code': id_code,
-                    # 'sirna': class_id
-                }
-                df.append(row)
+                    # template = 'Prediction is "{}" ({:.1f}%) - {}'
+                    # print(template.format(class_id, 100 * probability, label_batch[0]))
+                    row = {
+                        'id_code': id_code,
+                        'sirna': class_id
+                    }
+                    df.append(row)
 
-                if i % 100 == 0:
-                    write_df_to_gcs(df=df, gcs_path='predictions/v5.csv')
-                    # break
-            write_df_to_gcs(df=df, gcs_path='predictions/v5.csv')
+                    if i % 100 == 0:
+                        write_df_to_gcs(df=df, gcs_path='predictions/v5.csv')
+                        # break
+            except tf.errors.OutOfRangeError:
+                pass
+            finally:
+                write_df_to_gcs(df=df, gcs_path='predictions/v5.csv')
 
     else:
         raise ValueError("Method was {}".format(method))
