@@ -416,6 +416,7 @@ def main(use_tpu,
         resnet_classifier.evaluate(input_fn=train_input_fn, steps=steps_per_epoch)
     elif method == 'predict':
         predict_labels_iterator = predict_labels_dataset.make_one_shot_iterator()
+        next_element = predict_labels_iterator.get_next()
         predictions = resnet_classifier.predict(input_fn=predict_input_fn,
             yield_single_examples=True)
 
@@ -425,7 +426,7 @@ def main(use_tpu,
             for i in range(100000):
                 # class_id = pred_dict['classes']
                 # probability = pred_dict['probabilities'][class_id]
-                image_batch, label_batch = predict_labels_iterator.get_next()
+                image_batch, label_batch = next_element
                 label_batch = sess.run(label_batch)
                 id_code = tf_string_to_normal_string(label_batch[0])
                 print(id_code)
