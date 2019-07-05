@@ -403,15 +403,16 @@ def main(use_tpu,
         predict_labels_iterator = predict_labels_dataset.make_one_shot_iterator()
         predictions = resnet_classifier.predict(input_fn=predict_input_fn)
 
-        for pred_dict in predictions:
-            template = ('Prediction is "{}" ({:.1f}%).')
+        with tf.Session() as sess:
+            for pred_dict in predictions:
+                template = ('Prediction is "{}" ({:.1f}%).')
 
-            class_id = pred_dict['classes']
-            probability = pred_dict['probabilities'][class_id]
-            label = predict_labels_iterator.get_next()
-            print(label)
+                class_id = pred_dict['classes']
+                probability = pred_dict['probabilities'][class_id]
+                label = predict_labels_iterator.get_next()
+                print(sess.run(label))
 
-            print(template.format(class_id, 100 * probability))
+                print(template.format(class_id, 100 * probability))
     else:
         raise ValueError("Method was {}".format(method))
 
