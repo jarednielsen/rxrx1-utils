@@ -479,7 +479,7 @@ def main(use_tpu,
                         id_codes.append(id_code)
                         sites.append(site)
 
-                    for id_code, sirna, probability, site in zip(id_codes, class_ids, probabilities, sites):
+                    for id_code, class_id, probability, site in zip(id_codes, class_ids, probabilities, sites):
                         row = {
                             'id_code': id_code,
                             'sirna': class_id,
