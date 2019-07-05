@@ -378,6 +378,14 @@ def main(use_tpu,
             dummy_label=True,
             desc_instead_of_label=False,
             deterministic_oneshot=True)
+    predict_labels_dataset = rxinput.input_fn(
+            input_fn_params=predict_fn_params,
+            tf_records_glob=test_glob,
+            pixel_stats=GLOBAL_PIXEL_STATS,
+            transpose_input=transpose_input,
+            use_bfloat16=use_bfloat16,
+            desc_instead_of_label=True,
+            deterministic_oneshot=True)
 
 
     tf.logging.info('Training for %d steps (%.2f epochs in total). Current'
@@ -391,6 +399,7 @@ def main(use_tpu,
     elif method == 'evaluate':
         resnet_classifier.evaluate(input_fn=train_input_fn, steps=steps_per_epoch)
     elif method == 'predict':
+        predict_labels_iterator = predict_labels_dataset.make_one_shot_iterator()
         predictions = resnet_classifier.predict(input_fn=predict_input_fn)
 
         for pred_dict in predictions:
@@ -398,6 +407,8 @@ def main(use_tpu,
 
             class_id = pred_dict['classes']
             probability = pred_dict['probabilities'][class_id]
+            label = predict_labels_iterator.get_next()
+            print(label)
 
             print(template.format(class_id, 100 * probability))
     else:
