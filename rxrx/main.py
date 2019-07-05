@@ -431,9 +431,9 @@ def main(use_tpu,
                 }
                 df.append(row)
 
-                if i == 5:
+                if i % 1000 == 0:
                     write_df_to_gcs(df=pd.DataFrame(df), gcs_path='predictions/v5.csv')
-                    break
+                    # break
 
     else:
         raise ValueError("Method was {}".format(method))
