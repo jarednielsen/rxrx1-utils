@@ -427,12 +427,13 @@ def main(use_tpu,
                 # probability = pred_dict['probabilities'][class_id]
                 image_batch, label_batch = predict_labels_iterator.get_next()
                 label_batch = sess.run(label_batch)
-                # print(label_batch)
+                id_code = tf_string_to_normal_string(label_batch[0])
+                print(id_code)
 
                 # template = 'Prediction is "{}" ({:.1f}%) - {}'
                 # print(template.format(class_id, 100 * probability, label_batch[0]))
                 row = {
-                    'id_code': tf_string_to_normal_string(label_batch[0]),
+                    'id_code': id_code,
                     # 'sirna': class_id
                 }
                 df.append(row)
