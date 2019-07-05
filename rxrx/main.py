@@ -395,13 +395,13 @@ def main(use_tpu,
         predictions = resnet_classifier.predict(input_fn=predict_input_fn)
 
         for pred_dict in predictions:
-        template = ('Prediction is "{}" ({:.1f}%) - {}.')
+            template = ('Prediction is "{}" ({:.1f}%) - {}.')
 
-        class_id = pred_dict['classes']
-        probability = pred_dict['probabilities'][class_id]
-        desc = pred_dict['desc']
+            class_id = pred_dict['classes']
+            probability = pred_dict['probabilities'][class_id]
+            desc = pred_dict['desc']
 
-        print(template.format(class_id, 100 * probability, desc))
+            print(template.format(class_id, 100 * probability, desc))
     else
         raise ValueError("Method was {}".format(method))
 
