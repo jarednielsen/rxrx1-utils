@@ -412,28 +412,34 @@ def main(use_tpu,
         resnet_classifier.evaluate(input_fn=train_input_fn, steps=steps_per_epoch)
     elif method == 'predict':
         predict_labels_iterator = predict_labels_dataset.make_one_shot_iterator()
-        predictions = resnet_classifier.predict(input_fn=predict_input_fn)
+        predictions = resnet_classifier.predict(input_fn=predict_input_fn,
+            yield_single_examples=True)
+
+    def tf_string_to_normal_string(tf_string):
+        return tf_string.encode('utf-8').strip('"')
 
         df = []
         with tf.Session() as sess:
             for i, pred_dict in enumerate(predictions):
-                template = ('Prediction is "{}" ({:.1f}%) - {}')
 
                 class_id = pred_dict['classes']
                 probability = pred_dict['probabilities'][class_id]
-                image_batch, label_batch = sess.run(predict_labels_iterator.get_next())
-                print(label_batch)
+                image_batch, label_batch = predict_labels_iterator.get_next()
+                label_batch = sess.run(label_batch)
+                # print(label_batch)
 
-                print(template.format(class_id, 100 * probability, label_batch[0]))
+                # template = 'Prediction is "{}" ({:.1f}%) - {}'
+                # print(template.format(class_id, 100 * probability, label_batch[0]))
                 row = {
-                    'pred': class_id,
-                    'label': label_batch[0]
+                    'id_code': class_id,
+                    'sirna': tf_string_to_normal_string(label_batch[0])
                 }
                 df.append(row)
 
-                if i % 1000 == 0:
+                if i % 100 == 0:
                     write_df_to_gcs(df=pd.DataFrame(df), gcs_path='predictions/v5.csv')
                     # break
+            write_df_to_gcs(df=pd.DataFrame(df), gcs_path='predictions/v5.csv')
 
     else:
         raise ValueError("Method was {}".format(method))
