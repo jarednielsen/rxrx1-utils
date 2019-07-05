@@ -290,7 +290,8 @@ def main(use_tpu,
          warmup_epochs,
          input_fn_params=DEFAULT_INPUT_FN_PARAMS,
          predict_fn_params=DEFAULT_PREDICT_FN_PARAMS,
-         resnet_depth=50):
+         resnet_depth=50,
+         method='train'):
 
     if use_tpu & (tpu is None):
         tpu = os.getenv('TPU_NAME')
@@ -386,18 +387,23 @@ def main(use_tpu,
 
     start_timestamp = time.time()  # This time will include compilation time
 
-    # resnet_classifier.train(input_fn=train_input_fn, max_steps=train_steps)
-    # resnet_classifier.evaluate(input_fn=train_input_fn, steps=steps_per_epoch)
-    predictions = resnet_classifier.predict(input_fn=predict_input_fn)
+    if method == 'train':
+        resnet_classifier.train(input_fn=train_input_fn, max_steps=train_steps)
+    elif method == 'evaluate':
+        resnet_classifier.evaluate(input_fn=train_input_fn, steps=steps_per_epoch)
+    elif method == 'predict':
+        predictions = resnet_classifier.predict(input_fn=predict_input_fn)
 
-    for pred_dict in predictions:
-      template = ('Prediction is "{}" ({:.1f}%) - {}.')
+        for pred_dict in predictions:
+        template = ('Prediction is "{}" ({:.1f}%) - {}.')
 
-      class_id = pred_dict['classes']
-      probability = pred_dict['probabilities'][class_id]
-      desc = pred_dict['desc']
+        class_id = pred_dict['classes']
+        probability = pred_dict['probabilities'][class_id]
+        desc = pred_dict['desc']
 
-      print(template.format(class_id, 100 * probability, desc))
+        print(template.format(class_id, 100 * probability, desc))
+    else
+        raise ValueError("Method was {}".format(method))
 
     tf.logging.info('Finished training up to step %d. Elapsed seconds %d.',
                     train_steps, int(time.time() - start_timestamp))
