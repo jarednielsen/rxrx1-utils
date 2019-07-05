@@ -84,7 +84,6 @@ def resnet_model_fn(features, labels, mode, params, n_classes, num_train_images,
     Returns:
         A `TPUEstimatorSpec` for the model
     """
-    features, desc = features['image'], features['desc']
     if isinstance(features, dict):
         features = features['feature']
 
@@ -120,7 +119,6 @@ def resnet_model_fn(features, labels, mode, params, n_classes, num_train_images,
         predictions = {
             'classes': tf.argmax(logits, axis=1),
             'probabilities': tf.nn.softmax(logits, name='softmax_tensor'),
-            'desc': desc
         }
         return tf.contrib.tpu.TPUEstimatorSpec(
             mode=mode,
