@@ -409,7 +409,7 @@ def main(use_tpu,
 
                 class_id = pred_dict['classes']
                 probability = pred_dict['probabilities'][class_id]
-                label = predict_labels_iterator.get_next()
+                image, label = predict_labels_iterator.get_next()
                 print(sess.run(label))
 
                 print(template.format(class_id, 100 * probability))
