@@ -271,6 +271,7 @@ def write_df_to_gcs(df, gcs_path):
     client = storage.Client(project='cellsignal')
     bucket = client.get_bucket('cellsignal')
 
+    df = pd.DataFrame(df)
     df.to_csv('tmp.csv')
     local_tmp_path = ('tmp.csv')
     target_blob = bucket.blob(gcs_path)
@@ -415,8 +416,8 @@ def main(use_tpu,
         predictions = resnet_classifier.predict(input_fn=predict_input_fn,
             yield_single_examples=True)
 
-    def tf_string_to_normal_string(tf_string):
-        return tf_string.encode('utf-8').strip('"')
+        def tf_string_to_normal_string(tf_string):
+            return tf_string.encode('utf-8').strip('"')
 
         df = []
         with tf.Session() as sess:
@@ -437,9 +438,9 @@ def main(use_tpu,
                 df.append(row)
 
                 if i % 100 == 0:
-                    write_df_to_gcs(df=pd.DataFrame(df), gcs_path='predictions/v5.csv')
+                    write_df_to_gcs(df=df, gcs_path='predictions/v5.csv')
                     # break
-            write_df_to_gcs(df=pd.DataFrame(df), gcs_path='predictions/v5.csv')
+            write_df_to_gcs(df=df, gcs_path='predictions/v5.csv')
 
     else:
         raise ValueError("Method was {}".format(method))
