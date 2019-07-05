@@ -404,7 +404,7 @@ def main(use_tpu,
         predictions = resnet_classifier.predict(input_fn=predict_input_fn)
 
         with tf.Session() as sess:
-            for pred_dict in predictions:
+            for i, pred_dict in enumerate(predictions):
                 template = ('Prediction is "{}" ({:.1f}%).')
 
                 class_id = pred_dict['classes']
@@ -413,6 +413,9 @@ def main(use_tpu,
                 print(sess.run(label))
 
                 print(template.format(class_id, 100 * probability))
+                if i == 5:
+                    break
+
     else:
         raise ValueError("Method was {}".format(method))
 
