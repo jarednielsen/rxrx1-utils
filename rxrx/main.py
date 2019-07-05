@@ -375,7 +375,7 @@ def main(use_tpu,
             pixel_stats=GLOBAL_PIXEL_STATS,
             transpose_input=transpose_input,
             use_bfloat16=use_bfloat16,
-            desc_instead_of_label=False,
+            desc_instead_of_label=True,
             deterministic_oneshot=True)
 
 
