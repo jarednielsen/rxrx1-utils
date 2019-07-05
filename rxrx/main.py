@@ -405,14 +405,14 @@ def main(use_tpu,
 
         with tf.Session() as sess:
             for i, pred_dict in enumerate(predictions):
-                template = ('Prediction is "{}" ({:.1f}%).')
+                template = ('Prediction is "{}" ({:.1f}%) - {}')
 
                 class_id = pred_dict['classes']
                 probability = pred_dict['probabilities'][class_id]
-                image, label = predict_labels_iterator.get_next()
-                print(sess.run(label))
+                image_batch, label_batch = sess.run(predict_labels_iterator.get_next())
+                print(sess.run(label_batch))
 
-                print(template.format(class_id, 100 * probability))
+                print(template.format(class_id, 100 * probability, label_batch[0]))
                 if i == 5:
                     break
 
