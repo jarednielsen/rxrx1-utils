@@ -399,7 +399,7 @@ def main(use_tpu,
             class_id = pred_dict['classes']
             probability = pred_dict['probabilities'][class_id]
 
-            print(template.format(class_id, 100 * probability, desc))
+            print(template.format(class_id, 100 * probability))
     else:
         raise ValueError("Method was {}".format(method))
 
