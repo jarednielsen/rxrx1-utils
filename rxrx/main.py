@@ -400,7 +400,7 @@ def main(use_tpu,
     predict_labels_dataset = rxinput.input_fn(
             input_fn_params=predict_fn_params,
             tf_records_glob=test_glob,
-            params=dict(batch_size=1),
+            params=dict(batch_size=train_batch_size // 8),
             pixel_stats=GLOBAL_PIXEL_STATS,
             transpose_input=transpose_input,
             use_bfloat16=use_bfloat16,
@@ -422,7 +422,44 @@ def main(use_tpu,
         predict_labels_iterator = predict_labels_dataset.make_one_shot_iterator()
         next_element = predict_labels_iterator.get_next()
         predictions = resnet_classifier.predict(input_fn=predict_input_fn,
-            yield_single_examples=True)
+            yield_single_examples=False)
+
+        # df1 = []
+        # for i, pred_dict in enumerate(predictions):
+        #     # Get current image prediction
+        #     class_id = pred_dict['classes']
+        #     probability = pred_dict['probabilities'][class_id]
+        #     row = {
+        #         'sirna': class_id,
+        #         'probability': probability
+        #     }
+        #     df1.append(row)
+
+        # df2 = []
+        # with tf.Session() as sess:
+        #     try:
+        #         i = 0
+        #         while i < len(df1):
+        #             # Get current image id
+        #             image_batch, label_batch = next_element
+        #             label_batch = sess.run(label_batch)
+        #             # print(label_batch)
+        #             id_code, site = parse_tf_string(label_batch[0])
+
+        #             row = {
+        #                 'id_code': id_code,
+        #                 'site': site
+        #             }
+        #             df2.append(row)
+        #             i += 1
+        #     except tf.errors.OutOfRangeError:
+        #         pass
+
+        # df1 = pd.DataFrame(df1)
+        # df2 = pd.DataFrame(df2)
+        # df = pd.concate((df1, df2), axis='columns')
+        # write_df_to_gcs(df=df, gcs_path='predictions/v5.csv')
+
 
         df = []
         with tf.Session() as sess:
@@ -431,10 +468,13 @@ def main(use_tpu,
                 for i, pred_dict in enumerate(predictions):
                     # Get current image prediction
                     class_id = pred_dict['classes']
+                    print(class_id)
                     probability = pred_dict['probabilities'][class_id]
+                    print(probability)
                     # Get current image id
                     image_batch, label_batch = next_element
                     label_batch = sess.run(label_batch)
+                    print(label_batch)
                     id_code, site = parse_tf_string(label_batch[0])
                     # print(id_code)
 

@@ -81,9 +81,6 @@ def parse_example(value, use_bfloat16=True, pixel_stats=None, dummy_label=False,
         return image, label
 
 
-DEFAULT_PARAMS = dict(batch_size=512)
-
-
 def input_fn(tf_records_glob,
              input_fn_params,
              params=None,
