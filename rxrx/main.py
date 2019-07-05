@@ -468,25 +468,25 @@ def main(use_tpu,
                 for i, pred_dict in enumerate(predictions):
                     # Get current image prediction
                     class_ids = pred_dict['classes']
-                    print(class_ids)
                     probabilities = [probs[class_id] for probs, class_id in zip(pred_dict['probabilities'], class_ids)]
-                    print(probabilities)
                     # Get current image id
                     image_batch, label_batch = next_element
                     label_batch = sess.run(label_batch)
-                    print(label_batch)
-                    id_code, site = parse_tf_string(label_batch[0])
-                    # print(id_code)
+                    id_codes = []
+                    sites = []
+                    for label in label_batch:
+                        id_code, site = parse_tf_string(label)
+                        id_codes.append(id_code)
+                        sites.append(site)
 
-                    # template = 'Prediction is "{}" ({:.1f}%) - {}'
-                    # print(template.format(class_id, 100 * probability, label_batch[0]))
-                    row = {
-                        'id_code': id_code,
-                        'sirna': class_id,
-                        'probability': probability,
-                        'site': site
-                    }
-                    df.append(row)
+                    for id_code, sirna, probability, site in zip(id_codes, class_ids, probabilities, sites):
+                        row = {
+                            'id_code': id_code,
+                            'sirna': class_id,
+                            'probability': probability,
+                            'site': site
+                        }
+                        df.append(row)
 
                     if i % 100 == 0:
                         write_df_to_gcs(df=df, gcs_path='predictions/v5.csv')
