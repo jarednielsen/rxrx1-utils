@@ -469,7 +469,7 @@ def main(use_tpu,
                     # Get current image prediction
                     class_ids = pred_dict['classes']
                     print(class_ids)
-                    probabilities = [probs[class_id] for probs, ccid in zip(pred_dict['probabilities'], class_ids)]
+                    probabilities = [probs[class_id] for probs, class_id in zip(pred_dict['probabilities'], class_ids)]
                     print(probabilities)
                     # Get current image id
                     image_batch, label_batch = next_element
