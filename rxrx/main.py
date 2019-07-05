@@ -398,7 +398,6 @@ def main(use_tpu,
 
             class_id = pred_dict['classes']
             probability = pred_dict['probabilities'][class_id]
-            desc = pred_dict['desc']
 
             print(template.format(class_id, 100 * probability, desc))
     else:
