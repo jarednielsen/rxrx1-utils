@@ -376,7 +376,8 @@ def main(use_tpu,
             pixel_stats=GLOBAL_PIXEL_STATS,
             transpose_input=transpose_input,
             use_bfloat16=use_bfloat16,
-            no_label=True)
+            desc_instead_of_label=False,
+            deterministic_oneshot=True)
 
 
     tf.logging.info('Training for %d steps (%.2f epochs in total). Current'
