@@ -42,22 +42,6 @@ def set_shapes(transpose_input, batch_size, images, labels):
 
     return images, labels
 
-def get_description(value):
-    keys_to_features = {
-        'image': tf.FixedLenFeature((), tf.string),
-        'well': tf.FixedLenFeature((), tf.string),
-        'well_type': tf.FixedLenFeature((), tf.string),
-        'plate': tf.FixedLenFeature((), tf.int64),
-        'site': tf.FixedLenFeature((), tf.int64),
-        'cell_type': tf.FixedLenFeature((), tf.string),
-        'experiment': tf.FixedLenFeature((), tf.string),
-    }
-
-    parsed = tf.parse_single_example(value, keys_to_features)
-    # experiment_plate_well, fx HEPG2-08_1_B03
-    desc = tf.strings.format("{}_{}_{}", (parsed['experiment'], parsed['plate'], parsed['well']))
-    return desc
-
 def parse_example(value, use_bfloat16=True, pixel_stats=None, dummy_label=False, desc_instead_of_label=False):
 
     keys_to_features = {
@@ -74,8 +58,8 @@ def parse_example(value, use_bfloat16=True, pixel_stats=None, dummy_label=False,
 
     image_shape = [512, 512, 6]
     parsed = tf.parse_single_example(value, keys_to_features)
-    # experiment_plate_well, fx HEPG2-08_1_B03
-    desc = tf.strings.format("{}_{}_{}", (parsed['experiment'], parsed['plate'], parsed['well']))
+    # experiment_plate_well, fx HEPG2-08_1_B03+site
+    desc = tf.strings.format("{}_{}_{}+{}", (parsed['experiment'], parsed['plate'], parsed['well'], parsed['site']))
     image_raw = tf.decode_raw(parsed['image'], tf.uint8)
     image = tf.reshape(image_raw, image_shape)
     image.set_shape(image_shape)

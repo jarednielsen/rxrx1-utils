@@ -27,6 +27,7 @@ import os
 import time
 import argparse
 
+from google.cloud import storage
 import numpy as np
 import pandas as pd
 import tensorflow as tf
@@ -266,15 +267,18 @@ def resnet_model_fn(features, labels, mode, params, n_classes, num_train_images,
             loss=loss,
             eval_metrics=eval_metrics)
 
-def tf_string_to_normal_string(tf_string):
-    return tf_string.decode('utf-8').replace('"', '')
+def parse_tf_string(tf_string):
+    string = tf_string.decode('utf-8').replace('"', '')
+    id_code, site = string.split('+')
+    return id_code, site
 
 def write_df_to_gcs(df, gcs_path):
-    from google.cloud import storage
     client = storage.Client(project='cellsignal')
     bucket = client.get_bucket('cellsignal')
 
     df = pd.DataFrame(df)
+    # df = df.drop_duplicates(subset='id_code')
+    df = df.sort_values(by=['id_code', 'site'])
     df.to_csv('tmp.csv', index=False)
     local_tmp_path = ('tmp.csv')
     target_blob = bucket.blob(gcs_path)
@@ -431,14 +435,16 @@ def main(use_tpu,
                     # Get current image id
                     image_batch, label_batch = next_element
                     label_batch = sess.run(label_batch)
-                    id_code = tf_string_to_normal_string(label_batch[0])
+                    id_code, site = parse_tf_string(label_batch[0])
                     # print(id_code)
 
                     # template = 'Prediction is "{}" ({:.1f}%) - {}'
                     # print(template.format(class_id, 100 * probability, label_batch[0]))
                     row = {
                         'id_code': id_code,
-                        'sirna': class_id
+                        'sirna': class_id,
+                        'probability': probability,
+                        'site': site
                     }
                     df.append(row)
 
