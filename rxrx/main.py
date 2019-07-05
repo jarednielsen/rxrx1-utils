@@ -402,7 +402,7 @@ def main(use_tpu,
             desc = pred_dict['desc']
 
             print(template.format(class_id, 100 * probability, desc))
-    else
+    else:
         raise ValueError("Method was {}".format(method))
 
     tf.logging.info('Finished training up to step %d. Elapsed seconds %d.',
